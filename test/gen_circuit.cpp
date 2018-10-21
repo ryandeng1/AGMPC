@@ -1,7 +1,6 @@
 #include "emp-tool/emp-tool.h"
-
-//#include "emp-tool/circuits/float_circuit.h"
 using namespace emp;
+using namespace std;
 void ham(int n) {
 	Integer a(n, 0, ALICE);
 	Integer b(n, 0, BOB);
@@ -37,9 +36,9 @@ void sort(int n) {
 
 }
 
-/*
-vector<Float> matrix_mul(vector<Float> left_matrix, vector<Float> right_matrix, int dim) {
-	vector<Float> result(dim * dim);
+
+Float*  matrix_mul(Float*  left_matrix, Float* right_matrix, int dim) {
+	Float* result = new Float[dim * dim];
 	for (int i = 0; i < dim * dim; i++) {
 		result[i] = Float(40, 20, 0);
 	}
@@ -52,12 +51,8 @@ vector<Float> matrix_mul(vector<Float> left_matrix, vector<Float> right_matrix, 
 		}
 	}
 	return result;
-
 } 
-*/
-Float matrix_mul(Float left_matrix, Float right_matrix, int dim) {
-	return Float(40, 20, 5);
-}
+
 
 int main(int argc, char** argv) {
 //	setup_plain_prot(true, "sort.txt");
@@ -66,20 +61,17 @@ int main(int argc, char** argv) {
 //	ham(1<<10);
 //	finalize_plain_prot ();
 	int dim = 3;
-//	vector<Float> left_matrix(dim * dim);
-//	vector<Float> right_matrix(dim * dim);
-//	for (int i = 0; i < dim * dim; i++) {
-//		left_matrix[i] = Float(40, 20, i);
-//		right_matrix[i] = Float(40, 20, i);
-//	}
-	/*
-	vector<Float> result = matrix_mul(left_matrix, right_matrix, dim);
+	Float left_matrix[dim*dim];
+	Float right_matrix[dim*dim];
+	for (int i = 0; i < dim * dim; i++) {
+		left_matrix[i] = Float(40, 20, i);
+		right_matrix[i] = Float(40, 20, i);	
+	}
+	
+	Float* result  = matrix_mul(left_matrix, right_matrix, dim);
 	for (int i = 0; i < dim * dim; i++) {
 		result[i].reveal<double>();
 	}
-	*/
-//	vector<emp::Float> hi(5);
-//	Float result = matrix_mul(Float(40, 20, 10), Float(40, 20, .54), 3);
-	sort(128);
+	
 	finalize_plain_prot();
 }	

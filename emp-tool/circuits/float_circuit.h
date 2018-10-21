@@ -27,6 +27,8 @@ class Float: Swappable<Float> { public:
 	}
 
 	Float(int value_length, int expnt_length, double input, int party = PUBLIC);
+	//Default constructor in order to be able to instantiate arrays
+	Float() :value(Integer(32, 0, PUBLIC)), expnt(Integer(32, 0, PUBLIC)) {}
 
 	Float If(const Bit& select, const Float & d);
 
