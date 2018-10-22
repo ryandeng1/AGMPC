@@ -46,23 +46,40 @@ Float*  matrix_mul(Float*  left_matrix, Float* right_matrix, int dim) {
 		for (int j = 0; j < dim; j++) {
 			for (int k = 0; k < dim; k++) {
 				result[i * dim + j] = result[i * dim + j] + left_matrix[i * dim + k] * right_matrix[k * dim + j];
-			
 			}
 		}
 	}
 	return result;
 } 
 
+Float* add_matrix(Float* left_matrix, Float* right_matrix, int dim) {
+	Float* result = new Float[dim * dim];
+	for (int i = 0; i < dim; i++) {
+		for (int j = 0; j < dim; j++) {
+			result[i * dim + j]  = left_matrix[i * dim + j] + right_matrix[i * dim + j]
+		}
+	}
+	return result;
+}
+
+
+
+
+
+
+
+
+
 
 int main(int argc, char** argv) {
-//	setup_plain_prot(true, "sort.txt");
+	setup_plain_prot(true, "sort.txt");
 //	sort(128);	
 //	mult(2048);
 //	ham(1<<10);
 //	finalize_plain_prot ();
 	int dim = 3;
-	Float left_matrix[dim*dim];
-	Float right_matrix[dim*dim];
+	Float* left_matrix = new Float[dim*dim];
+	Float* right_matrix = new Float[dim*dim];
 	for (int i = 0; i < dim * dim; i++) {
 		left_matrix[i] = Float(40, 20, i);
 		right_matrix[i] = Float(40, 20, i);	
@@ -70,7 +87,7 @@ int main(int argc, char** argv) {
 	
 	Float* result  = matrix_mul(left_matrix, right_matrix, dim);
 	for (int i = 0; i < dim * dim; i++) {
-		result[i].reveal<double>();
+		cout << result[i].reveal<double>() << endl;
 	}
 	
 	finalize_plain_prot();
