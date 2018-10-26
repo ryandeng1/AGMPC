@@ -1,13 +1,13 @@
 #include "emp-tool/emp-tool.h"
 #include "json/json.hpp"
-
+#include "Eigen/Dense"
 using namespace emp;
 using namespace std;
 
-NUM_BITS = 20;
-NUM_DECIMAL = 40;
-NUM_ROWS = 10;
-NUM_COLS = 10;
+const int NUM_BITS = 20;
+const int NUM_DECIMAL = 40;
+const int NUM_ROWS = 10;
+const int NUM_COLS = 10;
 
 
 
@@ -191,7 +191,7 @@ vector<vector<Float*>> admm_coordinate(vector<Float*> w_list, vector<Float*> u_l
 	Float* z_new = soft_threshold_vec(th, add_matrix(w_avg, u_avg));
 	Float* z_new_neg = new Float[NUM_COLS];
 	for (int i = 0; i < NUM_COLS; i++) {
-		z_new_neg[i] = Float(40, 20, -1) * z_new;
+		z_new_neg[i] = Float(40, 20, -1) * z_new[i];
 	}
 	vector<Float*> new_ulist(nparties);
 	for (int i = 0; i < nparties; i++) {
@@ -230,7 +230,7 @@ Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter,
 	}
 
 	for (int i = 0; i < admm_iter; i++) {
-		for (j = 0; j < nparties; j++) {
+		for (int j = 0; j < nparties; j++) {
 			w_list[j] = admm_local(XXinv_cache[j], XTy_cache[j], u_list[j], z, rho, l);
 		}
 
@@ -270,7 +270,7 @@ int main(int argc, char** argv) {
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
 	cout << "Printing weights" << endl;
 	for (int i = 0; i < NUM_COLS; i++) {
-		cout << z[i] << endl;
+		cout << z[i].reveal() << endl;
 	}
 
 
