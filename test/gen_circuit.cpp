@@ -7,8 +7,7 @@ using json = nlohmann::json;
 using namespace Eigen;
 const int NUM_BITS = 20;
 const int NUM_DECIMAL = 40;
-const int NUM_ROWS = 10;
-const int NUM_COLS = 10;
+const int DIMENSION = 10;
 
 
 
@@ -52,9 +51,10 @@ void sort(int n) {
 
 Float*  matrix_mul(Float*  left_matrix, Float* right_matrix, int left_rows, int right_cols, int left_cols) {
 	Float* result = new Float[left_rows * right_cols];
-	for (int i = 0; i < left_rows * right_cols; i++) {
-		result[i] = Float(40, 20, 0);
+	for (int h = 0; h < left_rows * right_cols; h++) {
+		result[h] = Float(40, 20, 0);
 	}
+	cout << result[9].reveal<string>() << endl;
 	for (int i = 0; i < left_rows; i++) {
 		for (int j = 0; j < right_cols; j++) {
 			for (int k = 0; k < left_cols; k++) {
@@ -65,11 +65,11 @@ Float*  matrix_mul(Float*  left_matrix, Float* right_matrix, int left_rows, int 
 	return result;
 } 
 
-Float* add_matrix(Float* left_matrix, Float* right_matrix, int dim) {
-	Float* result = new Float[dim * dim];
-	for (int i = 0; i < dim; i++) {
-		for (int j = 0; j < dim; j++) {
-			result[i * dim + j]  = left_matrix[i * dim + j] + right_matrix[i * dim + j];
+Float* add_matrix(Float* left_matrix, Float* right_matrix, int rows, int cols) {
+	Float* result = new Float[rows * cols];
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++) {
+			result[i * cols + j]  = left_matrix[i * cols + j] + right_matrix[i * cols + j];
 		}
 	}
 	return result;
@@ -91,9 +91,9 @@ Float soft_threshold(Float th, Float v) {
     }
 }
 
-Float* soft_threshold_vec(Float th, Float* vec, int dim) {
-	Float* result = new Float[dim * dim];
-   	for (int i = 0; i < dim * dim; i++) {
+Float* soft_threshold_vec(Float th, Float* vec, int rows, int cols) {
+	Float* result = new Float[rows * cols];
+	for (int i = 0; i < rows * cols; i++) {
    		result[i] = soft_threshold(th, vec[i]);
    	}
     
@@ -105,32 +105,38 @@ vector<Float*> readMatrix(string file_name, double rho) {
     std::ifstream i(file_name);
     json j;
     i >> j;
-    MatrixXd data_matrix(NUM_ROWS, NUM_COLS);
-    VectorXd y(NUM_ROWS);
+    int dim = DIMENSION;
+    MatrixXd data_matrix(dim, dim);
+    VectorXd y(dim);
     vector<double> x_data = j["x"];
     vector<double> y_data = j["y"];
-    for (int i = 0; i < NUM_ROWS; i++) {
+    for (int i = 0; i < dim; i++) {
         y[i] = y_data[i];
-        for (int j = 0; j < NUM_COLS; j++) {
-            data_matrix(i, j) = x_data[i * NUM_COLS + j];
+        for (int j = 0; j < dim; j++) {
+            data_matrix(i, j) = x_data[i * dim + j];
         }
     }
 
 
     //Compute values of matrices
-    cout << "Matrix" << endl;
-    cout << data_matrix << endl;
+    //cout << "Matrix" << endl;
+    //cout << data_matrix << endl;
     MatrixXd transpose = data_matrix.transpose();
 
     
     MatrixXd XTX = transpose * data_matrix;
-    MatrixXd identity = MatrixXd::Identity(NUM_ROWS, NUM_COLS);
+    MatrixXd identity = MatrixXd::Identity(dim, dim);
     MatrixXd rho_identity = rho * identity;
     MatrixXd XTX_rhoI = XTX + rho_identity;
     MatrixXd inverse = XTX_rhoI.inverse();
     MatrixXd XTy = transpose * y;
 
-    Float* inverse_float = new Float[NUM_ROWS * NUM_COLS];
+    cout << "XTX + rho I inverse" << endl;
+    cout << inverse << endl;
+    cout << "XTy" << endl;
+    cout << XTy << endl;
+
+    Float* inverse_float = new Float[dim * dim];
     int r = inverse.rows();
     int c = inverse.cols();
     for (int i = 0; i < r; i++) {
@@ -142,7 +148,7 @@ vector<Float*> readMatrix(string file_name, double rho) {
 
 
 
-    Float* XTy_float = new Float[NUM_ROWS];
+    Float* XTy_float = new Float[dim];
     r = XTy.rows();
     c = XTy.cols();
     for (int i = 0; i < r; i++) {
@@ -158,49 +164,56 @@ vector<Float*> readMatrix(string file_name, double rho) {
 
 
 Float* admm_local(Float* XXinv, Float* XTy, Float* u, Float* z, Float rho, Float l) {
-	Float* neg_u = new Float[NUM_COLS];
-	for (int i = 0; i < NUM_COLS; i++) {
-		neg_u[i] = Float(40, 20, -1) * u[i];
-	}
-
-	Float* z_u = add_matrix(z, neg_u, NUM_COLS);
-	for (int i = 0; i < NUM_COLS; i++) {
-		z_u[i] = rho * z_u[i];
-	}
-	Float* second_term = add_matrix(XTy, z_u, NUM_COLS);
-    Float* w = matrix_mul(XXinv, second_term, NUM_ROWS, 1, NUM_COLS);
+    int dim = DIMENSION;
+    Float* neg_u = new Float[dim];
+    for (int i = 0; i < dim; i++) {
+	neg_u[i] = Float(40, 20, -1) * u[i];
+    }
+    Float* z_u = add_matrix(z, neg_u, dim, 1);
+    for (int i = 0; i < dim; i++) {
+	z_u[i] = rho * z_u[i];
+    }
+    Float* second_term = add_matrix(XTy, z_u, dim, 1);
+    
+    Float* w = matrix_mul(XXinv, second_term, dim, 1, dim);
+    cout << "ADMM LOCAL WEIGHT " << endl;
+    for (int i = 0; i < dim; i++) {
+	cout << w[i].reveal<string>() << endl;
+    }
     return w;
 
 }
 
 vector<vector<Float*>> admm_coordinate(vector<Float*> w_list, vector<Float*> u_list, Float* z, Float rho, Float l, int nparties) {
-	Float* w_avg = new Float[NUM_COLS];
-	Float* u_avg = new Float[NUM_COLS];
-	for (int i = 0; i < NUM_COLS; i++) {
+	cout << "Nparties " << nparties << endl;
+	int dim = DIMENSION;
+	Float* w_avg = new Float[dim];
+	Float* u_avg = new Float[dim];
+	for (int i = 0; i < dim; i++) {
 		w_avg[i] = Float(40, 20, 0);
 		u_avg[i] = Float(40, 20, 0);
 	}
 	for (int i = 0; i < nparties; i++) {
-		w_avg = add_matrix(w_avg, w_list[i], NUM_COLS);
-		u_avg = add_matrix(w_avg, w_list[i], NUM_COLS);
+		w_avg = add_matrix(w_avg, w_list[i], dim, 1);
+		u_avg = add_matrix(u_avg, u_list[i], dim, 1);
 	}
-
-	for (int i = 0; i < NUM_COLS; i++) {
-		w_avg[i] = w_avg[i] / Float(40, 20, nparties);
-		u_avg[i] = u_avg[i] / Float(40, 20, nparties);
+	double nparties_d = 1.0 / nparties;
+	for (int i = 0; i < dim; i++) {
+		w_avg[i] = w_avg[i] * Float(40, 20, nparties_d);
+		u_avg[i] = u_avg[i] * Float(40, 20, nparties_d);
 	}
-
 	Float th = l / (rho * Float(40, 20,nparties));
-	Float* z_new = soft_threshold_vec(th, add_matrix(w_avg, u_avg, NUM_COLS), NUM_COLS);
-	Float* z_new_neg = new Float[NUM_COLS];
-	for (int i = 0; i < NUM_COLS; i++) {
+	Float* w_u_avg_sum = add_matrix(w_avg, u_avg, dim, 1);
+	Float* z_new = soft_threshold_vec(th, w_u_avg_sum, dim, 1);
+	Float* z_new_neg = new Float[dim];
+	for (int i = 0; i < dim; i++) {
 		z_new_neg[i] = Float(40, 20, -1) * z_new[i];
 	}
 	vector<Float*> new_ulist(nparties);
 	for (int i = 0; i < nparties; i++) {
 		Float* u = u_list[i];
 		Float* w = w_list[i];
-		Float* new_u = add_matrix(add_matrix(u, w, NUM_COLS), z_new_neg, NUM_COLS);
+		Float* new_u = add_matrix(add_matrix(u, w, dim, 1), z_new_neg, dim, 1);
 		new_ulist[i] = new_u;
 	}
 
@@ -209,6 +222,12 @@ vector<vector<Float*>> admm_coordinate(vector<Float*> w_list, vector<Float*> u_l
 	z_new_vec[0] = z_new;
 	result[0] = new_ulist;
 	result[1] = z_new_vec;
+	/*
+	cout << "Printing z at the end of admm coordinate" << endl;
+	for (int i = 0; i < dim; i++) {
+		cout << z_new[i].reveal<string>() << endl;
+	}
+	*/
 	return result;
 }
 
@@ -218,22 +237,25 @@ vector<vector<Float*>> admm_coordinate(vector<Float*> w_list, vector<Float*> u_l
 Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter, Float rho, Float l, int nparties) {
 	vector<Float*> w_list(nparties);
 	vector<Float*> u_list(nparties);
-	Float* z = new Float[NUM_COLS];
+        int dim = DIMENSION;
+	Float* z = new Float[dim];
+	
 	for (int i = 0; i < nparties; i++) {
-		w_list[i] = new Float[NUM_ROWS];
-		u_list[i] = new Float[NUM_ROWS];
-		for (int j = 0; j < NUM_ROWS; j++) {
+		w_list[i] = new Float[dim];
+		u_list[i] = new Float[dim];
+		for (int j = 0; j < dim; j++) {
 			w_list[i][j] = Float(40, 20, 0);
 			u_list[i][j] = Float(40, 20, 0);
 		}
 	}
 
-	for (int i = 0; i < NUM_COLS; i++) {
+	for (int i = 0; i < dim; i++) {
 		z[i] = Float(40, 20, 0);
 	}
-
+	cout << "Inited everything" << endl;
 	for (int i = 0; i < admm_iter; i++) {
 		for (int j = 0; j < nparties; j++) {
+			cout << "Did I make it here?" << endl;
 			w_list[j] = admm_local(XXinv_cache[j], XTy_cache[j], u_list[j], z, rho, l);
 		}
 
@@ -260,20 +282,21 @@ Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter,
 int main(int argc, char** argv) {
 	setup_plain_prot(true, "sort.txt");
 	int dim = 10;
-	int nparties = 4;
+	int nparties = 1;
 	int admm_iter = 10;
 	Float rho(40, 20, 0.01);
 	double rho_double = 0.01;
-	Float l(40, 20, 0.08);
+	Float l(40, 20, 0.008);
 	string file_name = "data.json";
 	vector<Float*> vals = readMatrix(file_name, rho_double);
 	Float* XXinv = vals[0];
 	Float* XTy = vals[1];
+	//cout << "Did I make it here?" << endl;
 	vector<Float*> XXinv_cache = {XXinv};
 	vector<Float*> XTy_cache = {XTy};
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
 	cout << "Printing weights" << endl;
-	for (int i = 0; i < NUM_COLS; i++) {
+	for (int i = 0; i < dim; i++) {
 		cout << z[i].reveal<string>()  << endl;
 	}
 
