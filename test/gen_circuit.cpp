@@ -282,18 +282,23 @@ Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter,
 int main(int argc, char** argv) {
 	setup_plain_prot(true, "sort.txt");
 	int dim = 10;
-	int nparties = 1;
+	int nparties = 4;
 	int admm_iter = 10;
 	Float rho(40, 20, 0.01);
 	double rho_double = 0.01;
 	Float l(40, 20, 0.008);
-	string file_name = "data.json";
-	vector<Float*> vals = readMatrix(file_name, rho_double);
-	Float* XXinv = vals[0];
-	Float* XTy = vals[1];
+	vector<Float*> XXinv_cache(nparties);
+	vector<Float*> XTy_cache(nparties);
+	for (int i = 0; i < nparties; i++) {
+		string file_name = "data" + to_string(i + 1) + ".json";
+		vector<Float*> vals = readMatrix(file_name, rho_double);
+		Float* XXinv = vals[0];
+		Float* XTy = vals[1];
+		XXinv_cache[i] = XXinv;
+		XTy_cache[i] = XTy;
+	}
+	//string file_name = "data.json";
 	//cout << "Did I make it here?" << endl;
-	vector<Float*> XXinv_cache = {XXinv};
-	vector<Float*> XTy_cache = {XTy};
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
 	cout << "Printing weights" << endl;
 	for (int i = 0; i < dim; i++) {
