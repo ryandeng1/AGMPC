@@ -5,17 +5,20 @@ using namespace emp;
 
 const string circuit_file_location = macro_xstr(EMP_CIRCUIT_PATH);
 
-const static int nP = 3;
+const static int nP = 2;
 int party, port;
 void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
+	cout << "Party " << party << endl;
 	if(party == 1)cout <<"CIRCUIT:\t"<<filename<<endl;
 	//string file = circuit_file_location+"/"+filename;
 	CircuitFile cf(filename.c_str());
 
 	auto start = clock_start();
+	cout << "Hello" << endl;
 	CMPC<nP>* mpc = new CMPC<nP>(ios, pool, party, &cf);
 	ios[0]->flush();
 	ios[1]->flush();
+	cout << "Flushed" << endl;
 	double t2 = time_from(start);
 //	ios[0]->sync();
 //	ios[1]->sync();
@@ -50,8 +53,11 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 int main(int argc, char** argv) {
 	int func = 3;
 	parse_party_and_port(argv, &party, &port);
+	cout << "Party " << party << "Port " << port << endl;
 	if(party > nP)return 0;
+
 	NetIOMP<nP> io(party, port);
+	cout << "Did at least something work" << endl;
 #ifdef LOCALHOST
 	NetIOMP<nP> io2(party, port+2*(nP+1)*(nP+1)+1);
 #else
@@ -59,7 +65,7 @@ int main(int argc, char** argv) {
 #endif
 	NetIOMP<nP> *ios[2] = {&io, &io2};
 	ThreadPool pool(2*(nP-1)+2);	
-//	cout << "HELLO" << endl;
+	cout << "HELLO" << endl;
 //	for(int i = 0; i < 10; ++i)	
 	if(func == 0)	
 	bench_once(ios, &pool, circuit_file_location+"AES-non-expanded.txt");

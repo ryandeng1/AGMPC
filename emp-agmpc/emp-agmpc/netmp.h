@@ -3,7 +3,7 @@
 #include <emp-tool/emp-tool.h>
 #include "cmpc_config.h"
 using namespace emp;
-
+using namespace std;
 template<int nP>
 class NetIOMP { public:
 	NetIO*ios[nP+1];
@@ -14,6 +14,7 @@ class NetIOMP { public:
 		this->party = party;
 		memset(sent, false, nP+1);
 		for(int i = 1; i <= nP; ++i)for(int j = 1; j <= nP; ++j)if(i < j){
+			cout << "Now at i: " << i << " j : " << j << endl;
 			if(i == party) {
 #ifdef LOCALHOST
 				ios[j] = new NetIO(IP[j], port+2*(i*nP+j), true);

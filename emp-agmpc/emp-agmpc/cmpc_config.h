@@ -11,9 +11,10 @@ const static char *IP[] = {""
 ,	"127.0.0.1"
 ,	"127.0.0.1"};
 */
-const static char *IP[] = {"ec2-52-39-162-238.us-west-2.compute.amazonaws.com", 
-"ec2-34-223-215-198.us-west-2.compute.amazonaws.com"};
 
+const static char *IP[] = {"","ec2-52-39-162-238.us-west-2.compute.amazonaws.com", 
+"ec2-34-223-215-198.us-west-2.compute.amazonaws.com"};
+//const static char *IP[] = {"", "172.31.28.121", "172.31.36.88"};
 //"ec2-23-20-124-131.compute-1.amazonaws.com", 
 //"ec2-52-73-142-253.compute-1.amazonaws.com"};
 
