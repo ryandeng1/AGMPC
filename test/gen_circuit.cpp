@@ -54,7 +54,6 @@ Float*  matrix_mul(Float*  left_matrix, Float* right_matrix, int left_rows, int 
 	for (int h = 0; h < left_rows * right_cols; h++) {
 		result[h] = Float(40, 20, 0);
 	}
-	cout << result[9].reveal<string>() << endl;
 	for (int i = 0; i < left_rows; i++) {
 		for (int j = 0; j < right_cols; j++) {
 			for (int k = 0; k < left_cols; k++) {
@@ -100,20 +99,20 @@ Float* soft_threshold_vec(Float th, Float* vec, int rows, int cols) {
     return result;
 }
 
-vector<Float*> readMatrix(string file_name, double rho) {
+vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
     cout << "Reading matrix" << endl;
     std::ifstream i(file_name);
     json j;
     i >> j;
     int dim = DIMENSION;
-    MatrixXd data_matrix(dim, dim);
-    VectorXd y(dim);
+    MatrixXd data_matrix(rows, dim);
+    VectorXd y(rows);
     vector<double> x_data = j["x"];
     vector<double> y_data = j["y"];
-    for (int i = 0; i < dim; i++) {
+    for (int i = 0; i < rows; i++) {
         y[i] = y_data[i];
-        for (int j = 0; j < dim; j++) {
-            data_matrix(i, j) = x_data[i * dim + j];
+        for (int j = 0; j < cols; j++) {
+            data_matrix(i, j) = x_data[i * cols + j];
         }
     }
 
@@ -136,7 +135,7 @@ vector<Float*> readMatrix(string file_name, double rho) {
     cout << "XTy" << endl;
     cout << XTy << endl;
 
-    Float* inverse_float = new Float[dim * dim];
+    Float* inverse_float = new Float[cols * cols];
     int r = inverse.rows();
     int c = inverse.cols();
     for (int i = 0; i < r; i++) {
@@ -148,7 +147,7 @@ vector<Float*> readMatrix(string file_name, double rho) {
 
 
 
-    Float* XTy_float = new Float[dim];
+    Float* XTy_float = new Float[cols];
     r = XTy.rows();
     c = XTy.cols();
     for (int i = 0; i < r; i++) {
@@ -281,8 +280,9 @@ Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter,
 
 int main(int argc, char** argv) {
 	setup_plain_prot(true, "sort.txt");
-	int dim = 10;
-	int nparties = 4;
+	int rows = 100;
+	int cols = 10;
+	int nparties = 2;
 	int admm_iter = 10;
 	Float rho(40, 20, 0.01);
 	double rho_double = 0.01;
@@ -291,7 +291,7 @@ int main(int argc, char** argv) {
 	vector<Float*> XTy_cache(nparties);
 	for (int i = 0; i < nparties; i++) {
 		string file_name = "data" + to_string(i + 1) + ".json";
-		vector<Float*> vals = readMatrix(file_name, rho_double);
+		vector<Float*> vals = readMatrix(file_name, rho_double, rows, cols);
 		Float* XXinv = vals[0];
 		Float* XTy = vals[1];
 		XXinv_cache[i] = XXinv;
@@ -301,7 +301,7 @@ int main(int argc, char** argv) {
 	//cout << "Did I make it here?" << endl;
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
 	cout << "Printing weights" << endl;
-	for (int i = 0; i < dim; i++) {
+	for (int i = 0; i < cols; i++) {
 		cout << z[i].reveal<string>()  << endl;
 	}
 
