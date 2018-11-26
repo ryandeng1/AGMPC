@@ -13,9 +13,9 @@ const string circuit_file_location = macro_xstr(EMP_CIRCUIT_PATH);
 const static int nP = 2;
 int party, port;
 int rows = 100;
-int cols = 10;
+int cols = 5;
 double rho = 0.01;
-int VALUE_LENGTH = 40;
+int VALUE_LENGTH = 20;
 int EXPONENT_LENGTH = 20;
 
 vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
@@ -52,27 +52,31 @@ vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
     cout << inverse << endl;
     cout << "XTy" << endl;
     cout << XTy << endl;
+    cout << "WHAT IS GOING ON" << endl;
+    Float *inverse_float  = new Float[cols * cols];
+    int r = cols;
+    int c = cols;
+    cout << "Rows " << r << "Columns " << c << endl;
+  
 
-    Float* inverse_float = new Float[cols * cols];
-    int r = inverse.rows();
-    int c = inverse.cols();
     for (int i = 0; i < r; i++) {
         for (int j = 0; j < c; j++) {
-            inverse_float[i * c + j] = Float(40, 20, inverse(i, j));
+            inverse_float[i * c + j] = Float(VALUE_LENGTH, EXPONENT_LENGTH, inverse(i, j));
          
         }
     }  
 
-
+    cout << "Got XTX inverse" << endl;
 
     Float* XTy_float = new Float[cols];
     r = XTy.rows();
     c = XTy.cols();
     for (int i = 0; i < r; i++) {
         for (int j = 0; j < c; j++) {
-            XTy_float[i * c + j] = Float(40, 20, XTy(i, j));
+            XTy_float[i * c + j] = Float(VALUE_LENGTH, EXPONENT_LENGTH, XTy(i, j));
         }
     }
+    cout << "Got XTy " << endl;
 
     vector<Float*> values(2);
     values[0] = inverse_float;
@@ -122,6 +126,7 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	Float* XTX_rhoI = values[0];
 	Float* XTy = values[1];
 	int input_index = 0;
+	cout << "HERE" << endl;
 	for (int i = 0; i < cols * cols; i++) {
 		Float float_val = XTX_rhoI[i];
 		Integer val = float_val.value;
