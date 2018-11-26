@@ -18,7 +18,7 @@ double rho = 0.01;
 int VALUE_LENGTH = 20;
 int EXPONENT_LENGTH = 20;
 
-vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
+vector<MatrixXd> readMatrix(string file_name, double rho, int rows, int cols) {
     cout << "Reading matrix" << endl;
     std::ifstream i("../"+file_name);
     json j;
@@ -52,7 +52,7 @@ vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
     cout << inverse << endl;
     cout << "XTy" << endl;
     cout << XTy << endl;
-    cout << "WHAT IS GOING ON" << endl;
+    /*
     Float *inverse_float  = new Float[cols * cols];
     int r = cols;
     int c = cols;
@@ -77,10 +77,16 @@ vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
         }
     }
     cout << "Got XTy " << endl;
-
+    
+    
     vector<Float*> values(2);
     values[0] = inverse_float;
     values[1] = XTy_float;
+    return values;
+    */
+    vector<MatrixXd> values(2);
+    values[0] = inverse;
+    values[1] = XTy;
     return values;
 }
 
@@ -92,11 +98,9 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	CircuitFile cf(filename.c_str());
 
 	auto start = clock_start();
-	cout << "Hello" << endl;
 	CMPC<nP>* mpc = new CMPC<nP>(ios, pool, party, &cf);
 	ios[0]->flush();
 	ios[1]->flush();
-	cout << "Flushed" << endl;
 	double t2 = time_from(start);
 //	ios[0]->sync();
 //	ios[1]->sync();
@@ -111,7 +115,6 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 //	cout << "Input size " << cf.n1 + cf.n2 << endl;
 	start = clock_start();
 	mpc->function_dependent();
-	cout << "Did I complete function dependent?" << endl;
 	ios[0]->flush();
 	ios[1]->flush();
 	t2 = time_from(start);
@@ -121,35 +124,67 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	bool *in = new bool[cf.n1+cf.n2]; bool *out = new bool[cf.n3];
 	cout << "Output size " << cf.n3 << endl;
 	string file_name = "data" + to_string(party) + ".json";
-	vector<Float*> values = readMatrix(file_name, rho, rows, cols);
+//	vector<Float*> values = readMatrix(file_name, rho, rows, cols);
+        
 	cout << "Read matrix" << endl;
-	Float* XTX_rhoI = values[0];
-	Float* XTy = values[1];
+	vector<MatrixXd> values = readMatrix(file_name, rho, rows, cols);
+	MatrixXd  inverse  = values[0];
+	MatrixXd  XTy_vec = values[1];
+    	int r = cols;
+    	int c = cols;
+    	cout << "Rows " << r << "Columns " << c << endl;
+  
+	/*
+    	for (int i = 0; i < r; i++) {
+        	for (int j = 0; j < c; j++) {
+            		XTX_rhoI[i * c + j] = Float(VALUE_LENGTH, EXPONENT_LENGTH, inverse(i, j)); 
+        	}
+    	}  
+
+   	 cout << "Got XTX inverse" << endl;
+
+    	Float* XTy = new Float[cols];
+//    	r = XTy.rows();
+//    	c = XTy.cols();
+    	for (int i = 0; i < r; i++) {
+        	for (int j = 0; j < c; j++) {
+            		XTy[i * c + j] = Float(VALUE_LENGTH, EXPONENT_LENGTH, XTy_vec(i, j));
+        	}
+    	}
+   	cout << "Got XTy " << endl;
+        */
+
+        //Float* inverse_float = new Float[cols * cols];
+        //Float* XTy_float = new Float[cols];
+        
 	int input_index = 0;
 	cout << "HERE" << endl;
-	for (int i = 0; i < cols * cols; i++) {
-		Float float_val = XTX_rhoI[i];
-		Integer val = float_val.value;
-		Integer expnt = float_val.expnt;
-		for (int j = 0; j < VALUE_LENGTH; j++) {
-			in[input_index] = val[j].reveal<bool>();
-			input_index++;
-		}
-		for (int j = 0; j < EXPONENT_LENGTH; j++) {
-			in[input_index] = expnt[j].reveal<bool>();
-			input_index++;
-		}
+	for (int i = 0; i < cols; i++) {
+		for (int j = 0; j < cols; j++) {		
+//			Float float_val = Float(VALUE_LENGTH, EXPONENT_LENGTH, 0.0);
+			cout << "Instantiated float " << endl;
+//			Integer val = float_val.value;
+//			Integer expnt = float_val.expnt;
+			for (int k = 0; k < VALUE_LENGTH; k++) {
+				in[input_index] = 0;//val[k].reveal<bool>();
+				input_index++;
+			}
+			for (int k = 0; k < EXPONENT_LENGTH; k++) {
+				in[input_index] = 0;//expnt[k].reveal<bool>();
+				input_index++;
+			}
+		}	
 	}
 	for (int i = 0; i < cols; i++) {
-		Float float_val = XTy[i];
-		Integer val = float_val.value;
-		Integer expnt = float_val.expnt;
+//		Float float_val = Float(VALUE_LENGTH, EXPONENT_LENGTH, XTy_vec(i));
+//		Integer val = float_val.value;
+//		Integer expnt = float_val.expnt;
 		for (int j = 0; j < VALUE_LENGTH; j++) {
-			in[input_index] = val[j].reveal<bool>();
+			in[input_index] = 0;//val[j].reveal<bool>();
 			input_index++;
 		}
 		for (int j = 0; j < EXPONENT_LENGTH; j++) {
-			in[input_index] = expnt[j].reveal<bool>();
+			in[input_index] = 0;//expnt[j].reveal<bool>();
 			input_index++;
 		}
 	}
@@ -168,8 +203,8 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 //	uint64_t band2 = io.count();
 //	if(party == 1)cout <<"bandwidth\t"<<party<<"\t"<<band2<<endl;
 	if(party == 1)cout <<"ONLINE:\t"<<party<<"\t"<<t2<<" \n"<<flush;
-	Float* result = new Float[cols];
-	bool* pointer = out;
+//	Float* result = new Float[cols];
+	/*
 	for (int i = 0; i < cols; i++) {
 		Integer value = Integer(VALUE_LENGTH, pointer);
 		Integer expnt = Integer(EXPONENT_LENGTH, pointer + VALUE_LENGTH);
@@ -179,11 +214,19 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 		result[i] = float_val;
 		pointer = pointer + VALUE_LENGTH + EXPONENT_LENGTH;
 	}
-	
-
+	*/
+	/*
 	cout << "Weights" << endl;
 	for (int i = 0; i < cols; i++) {
 		cout << result[i].reveal<string>() << endl;
+	}
+	*/
+	if (party == 1) {
+		string res = "";
+		for (int i = 0; i < cf.n3; i++) {
+			res += (out[i] ? "1":"0");
+		}
+		cout << "Result " << res << endl;
 	}
 	delete mpc;
 }
