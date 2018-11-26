@@ -1,7 +1,12 @@
 #include <emp-tool/emp-tool.h>
 #include "emp-agmpc/emp-agmpc.h"
+#include "../json/json.hpp"
+#include "../Eigen/Dense"
+
 using namespace std;
 using namespace emp;
+using json = nlohmann::json;
+using namespace Eigen;
 
 const string circuit_file_location = macro_xstr(EMP_CIRCUIT_PATH);
 
@@ -18,8 +23,7 @@ vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
     std::ifstream i(file_name);
     json j;
     i >> j;
-    int dim = DIMENSION;
-    MatrixXd data_matrix(rows, dim);
+    MatrixXd data_matrix(rows, cols);
     VectorXd y(rows);
     vector<double> x_data = j["x"];
     vector<double> y_data = j["y"];
@@ -38,7 +42,7 @@ vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
 
     
     MatrixXd XTX = transpose * data_matrix;
-    MatrixXd identity = MatrixXd::Identity(dim, dim);
+    MatrixXd identity = MatrixXd::Identity(cols, cols);
     MatrixXd rho_identity = rho * identity;
     MatrixXd XTX_rhoI = XTX + rho_identity;
     MatrixXd inverse = XTX_rhoI.inverse();
@@ -111,34 +115,34 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 
 	bool *in = new bool[cf.n1+cf.n2]; bool *out = new bool[cf.n3];
 	cout << "Output size " << cf.n3 << endl;
-	string file_name = "data" + str(party) + ".json";
+	string file_name = "data" + to_string(party) + ".json";
 	vector<Float*> values = readMatrix(file_name, rho, rows, cols);
 	Float* XTX_rhoI = values[0];
 	Float* XTy = values[1];
 	int input_index = 0;
 	for (int i = 0; i < cols * cols; i++) {
-		Float val = XTX_rhoI[i];
-		Integer val = XTX_rhoI.value;
-		Integer expnt = XTX_rhoI.expnt;
+		Float float_val = XTX_rhoI[i];
+		Integer val = float_val.value;
+		Integer expnt = float_val.expnt;
 		for (int j = 0; j < VALUE_LENGTH; j++) {
-			in[input_index] = val[j];
+			in[input_index] = val[j].reveal<bool>();
 			input_index++;
 		}
 		for (int j = 0; j < EXPONENT_LENGTH; j++) {
-			in[input_index] = expnt[j];
+			in[input_index] = expnt[j].reveal<bool>();
 			input_index++;
 		}
 	}
 	for (int i = 0; i < cols; i++) {
-		Float val = XTy[i];
-		Integer val = XTy.value;
-		Integer expnt = XTy.expnt;
+		Float float_val = XTy[i];
+		Integer val = float_val.value;
+		Integer expnt = float_val.expnt;
 		for (int j = 0; j < VALUE_LENGTH; j++) {
-			in[input_index] = val[j];
+			in[input_index] = val[j].reveal<bool>();
 			input_index++;
 		}
 		for (int j = 0; j < EXPONENT_LENGTH; j++) {
-			in[input_index] = expnt[j];
+			in[input_index] = expnt[j].reveal<bool>();
 			input_index++;
 		}
 	}
@@ -162,17 +166,17 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	for (int i = 0; i < cols; i++) {
 		Integer value = Integer(VALUE_LENGTH, pointer);
 		Integer expnt = Integer(EXPONENT_LENGTH, pointer + VALUE_LENGTH);
-		Float val = Float(VALUE_LENGTH, EXPONENT_LENGTH, 0.0);
-		val.value = value;
-		value.expnt = expnt;
-		result[i] = val;
+		Float float_val = Float(VALUE_LENGTH, EXPONENT_LENGTH, 0.0);
+		float_val.value = value;
+		float_val.expnt = expnt;
+		result[i] = float_val;
 		pointer = pointer + VALUE_LENGTH + EXPONENT_LENGTH;
 	}
 	
 
 	cout << "Weights" << endl;
 	for (int i = 0; i < cols; i++) {
-		cout << result[i].reveal<string>(); << endl;
+		cout << result[i].reveal<string>() << endl;
 	}
 	delete mpc;
 }
