@@ -269,7 +269,7 @@ Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter,
 
 
 
-Float* main_func() {
+void main_func() {
 	int cols = DIMENSION;
 	int nparties = 2;
 	int admm_iter = 10;
@@ -304,8 +304,10 @@ Float* main_func() {
 	}
 
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
-	
-	return z;	
+	for (int i = 0; i < DIMENSION; i++) {
+		z[i].reveal<string>();
+	}	
+		
 }
 
 
@@ -323,10 +325,8 @@ int main(int argc, char** argv) {
 	//cout << "Did I make it here?" << endl;
 
 	*/
-	Float* z = main_func();
+	main_func();
 	//cout << "Printing weights" << endl;
-	for (int i = 0; i < DIMENSION; i++) {
-		z[i].reveal<string>();
-	}
+
 	finalize_plain_prot();
 }	
