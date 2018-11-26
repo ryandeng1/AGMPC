@@ -98,7 +98,7 @@ Float* soft_threshold_vec(Float th, Float* vec, int rows, int cols) {
     
     return result;
 }
-
+/*
 vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
     cout << "Reading matrix" << endl;
     std::ifstream i(file_name);
@@ -161,7 +161,7 @@ vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
     return values;
 }
 
-
+*/
 Float* admm_local(Float* XXinv, Float* XTy, Float* u, Float* z, Float rho, Float l) {
     int dim = DIMENSION;
     Float* neg_u = new Float[dim];
