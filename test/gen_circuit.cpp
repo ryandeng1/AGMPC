@@ -5,9 +5,9 @@ using namespace emp;
 using namespace std;
 using json = nlohmann::json;
 using namespace Eigen;
-const int NUM_BITS = 20;
-const int NUM_DECIMAL = 40;
-const int DIMENSION = 10;
+const int NUM_EXPNT = 20;
+const int NUM_VALUE = 20;
+const int DIMENSION = 5;
 
 
 
@@ -52,7 +52,7 @@ void sort(int n) {
 Float*  matrix_mul(Float*  left_matrix, Float* right_matrix, int left_rows, int right_cols, int left_cols) {
 	Float* result = new Float[left_rows * right_cols];
 	for (int h = 0; h < left_rows * right_cols; h++) {
-		result[h] = Float(40, 20, 0);
+		result[h] = Float(NUM_VALUE, NUM_EXPNT, 0);
 	}
 	for (int i = 0; i < left_rows; i++) {
 		for (int j = 0; j < right_cols; j++) {
@@ -78,7 +78,7 @@ Float* add_matrix(Float* left_matrix, Float* right_matrix, int rows, int cols) {
 
 Float soft_threshold(Float th, Float v) {
     Bit v_greater_th = v.greater(th);
-    Bit neg_th_greater_v = (Float(40, 20, -1) * th).greater(v); 
+    Bit neg_th_greater_v = (Float(NUM_VALUE, NUM_EXPNT, -1) * th).greater(v); 
     if (v_greater_th.reveal(PUBLIC)) {
         return v - th;
     }
@@ -166,7 +166,7 @@ Float* admm_local(Float* XXinv, Float* XTy, Float* u, Float* z, Float rho, Float
     int dim = DIMENSION;
     Float* neg_u = new Float[dim];
     for (int i = 0; i < dim; i++) {
-	neg_u[i] = Float(40, 20, -1) * u[i];
+	neg_u[i] = Float(NUM_VALUE, NUM_EXPNT, -1) * u[i];
     }
     Float* z_u = add_matrix(z, neg_u, dim, 1);
     for (int i = 0; i < dim; i++) {
@@ -190,8 +190,8 @@ vector<vector<Float*>> admm_coordinate(vector<Float*> w_list, vector<Float*> u_l
 	Float* w_avg = new Float[dim];
 	Float* u_avg = new Float[dim];
 	for (int i = 0; i < dim; i++) {
-		w_avg[i] = Float(40, 20, 0);
-		u_avg[i] = Float(40, 20, 0);
+		w_avg[i] = Float(NUM_VALUE, NUM_EXPNT, 0);
+		u_avg[i] = Float(NUM_VALUE, NUM_EXPNT, 0);
 	}
 	for (int i = 0; i < nparties; i++) {
 		w_avg = add_matrix(w_avg, w_list[i], dim, 1);
@@ -199,15 +199,15 @@ vector<vector<Float*>> admm_coordinate(vector<Float*> w_list, vector<Float*> u_l
 	}
 	double nparties_d = 1.0 / nparties;
 	for (int i = 0; i < dim; i++) {
-		w_avg[i] = w_avg[i] * Float(40, 20, nparties_d);
-		u_avg[i] = u_avg[i] * Float(40, 20, nparties_d);
+		w_avg[i] = w_avg[i] * Float(NUM_VALUE, NUM_EXPNT, nparties_d);
+		u_avg[i] = u_avg[i] * Float(NUM_VALUE, NUM_EXPNT, nparties_d);
 	}
-	Float th = l / (rho * Float(40, 20,nparties));
+	Float th = l / (rho * Float(NUM_VALUE, NUM_EXPNT, nparties));
 	Float* w_u_avg_sum = add_matrix(w_avg, u_avg, dim, 1);
 	Float* z_new = soft_threshold_vec(th, w_u_avg_sum, dim, 1);
 	Float* z_new_neg = new Float[dim];
 	for (int i = 0; i < dim; i++) {
-		z_new_neg[i] = Float(40, 20, -1) * z_new[i];
+		z_new_neg[i] = Float(NUM_VALUE, NUM_EXPNT, -1) * z_new[i];
 	}
 	vector<Float*> new_ulist(nparties);
 	for (int i = 0; i < nparties; i++) {
@@ -244,13 +244,13 @@ Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter,
 		w_list[i] = new Float[dim];
 		u_list[i] = new Float[dim];
 		for (int j = 0; j < dim; j++) {
-			w_list[i][j] = Float(40, 20, 0);
-			u_list[i][j] = Float(40, 20, 0);
+			w_list[i][j] = Float(NUM_VALUE, NUM_EXPNT, 0);
+			u_list[i][j] = Float(NUM_VALUE, NUM_EXPNT, 0);
 		}
 	}
 
 	for (int i = 0; i < dim; i++) {
-		z[i] = Float(40, 20, 0);
+		z[i] = Float(NUM_VALUE, NUM_EXPNT, 0);
 	}
 	//cout << "Inited everything" << endl;
 	for (int i = 0; i < admm_iter; i++) {
@@ -282,19 +282,19 @@ void main_func() {
 		Float* XXinv = new Float[cols * cols];
 		for (int j = 0; j < cols * cols; j++) {
 			if (i == 0) {
-				XXinv[j] = Float(40, 20, 0, ALICE);
+				XXinv[j] = Float(NUM_VALUE, NUM_EXPNT, 0, ALICE);
 			}
 			else {
-				XXinv[j] = Float(40, 20, 0, BOB);
+				XXinv[j] = Float(NUM_VALUE, NUM_EXPNT, 0, BOB);
 			}
 		} 
 		Float* XTy = new Float[cols];
 		for (int h = 0; h < cols; h++) {
 			if (i == 0) {
-				XTy[h] = Float(40, 20, 0, ALICE);
+				XTy[h] = Float(NUM_VALUE, NUM_EXPNT, 0, ALICE);
 			}
 			else {
-				XTy[h] = Float(40, 20, 0, BOB);
+				XTy[h] = Float(NUM_VALUE, NUM_EXPNT, 0, BOB);
 			}
 		}
 		XXinv_cache[i] = XXinv;
