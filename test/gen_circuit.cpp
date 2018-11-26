@@ -270,7 +270,6 @@ Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter,
 
 
 Float* main_func() {
-//	int rows = 100;
 	int cols = DIMENSION;
 	int nparties = 2;
 	int admm_iter = 10;
@@ -280,20 +279,16 @@ Float* main_func() {
 	vector<Float*> XTy_cache(nparties);
 	
 	for (int i = 0; i < nparties; i++) {
-//		string file_name = "data" + to_string(i + 1) + ".json";
-//		vector<Float*> vals = readMatrix(file_name, rho_double, rows, cols);
 		Float* XXinv = new Float[cols * cols];
 		for (int j = 0; j < cols; j++) {
 			for (int k = 0; k < cols; k++) {
-				XXinv[i * cols + j] = Float(40, 20, 0.0, i);
+				XXinv[i * cols + j] = Float(40, 20, 0.0, i + 1);
 			}
 		} 
 		Float* XTy = new Float[cols];
-		for (int j = 0; j < cols; j++) {
-			XTy[j] = Float(40, 20, 0.0, i);
+		for (int h = 0; h < cols; h++) {
+			XTy[h] = Float(40, 20, 0.0, i + 1);
 		}
-//		Float* XXinv = vals[0];
-//		Float* XTy = vals[1];
 		XXinv_cache[i] = XXinv;
 		XTy_cache[i] = XTy;
 	}
@@ -326,5 +321,4 @@ int main(int argc, char** argv) {
 	*/
 	main_func();
 	finalize_plain_prot();
-	return 0;
 }	
