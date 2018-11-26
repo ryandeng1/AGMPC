@@ -11,7 +11,7 @@ const int DIMENSION = 10;
 
 
 
-/*
+
 void ham(int n) {
 	Integer a(n, 0, ALICE);
 	Integer b(n, 0, BOB);
@@ -46,7 +46,7 @@ void sort(int n) {
 		A[i].reveal<string>();
 
 }
-*/
+
 
 
 Float*  matrix_mul(Float*  left_matrix, Float* right_matrix, int left_rows, int right_cols, int left_cols) {
@@ -277,17 +277,15 @@ void main_func() {
 	Float l(40, 20, 0.008);
 	vector<Float*> XXinv_cache(nparties);
 	vector<Float*> XTy_cache(nparties);
-	
+		
 	for (int i = 0; i < nparties; i++) {
 		Float* XXinv = new Float[cols * cols];
-		for (int j = 0; j < cols; j++) {
-			for (int k = 0; k < cols; k++) {
-				if (i == 0) {
-					XXinv[i * cols + j] = Float(40, 20, 0, ALICE);
-				}
-				else {
-					XXinv[i * cols + j] = Float(40, 20, 0, BOB);
-				}
+		for (int j = 0; j < cols * cols; j++) {
+			if (i == 0) {
+				XXinv[j] = Float(40, 20, 0, ALICE);
+			}
+			else {
+				XXinv[j] = Float(40, 20, 0, BOB);
 			}
 		} 
 		Float* XTy = new Float[cols];
@@ -302,7 +300,28 @@ void main_func() {
 		XXinv_cache[i] = XXinv;
 		XTy_cache[i] = XTy;
 	}
+	
+	/*
+	Float* inverse_one = new Float[cols * cols];
+	for (int i = 0; i < cols * cols; i++) {
+		inverse_one[i] = Float(40, 20, 0, ALICE);
+	}
 
+	Float* XTy_one = new Float[cols];
+	for (int i = 0; i < cols; i++) {
+		XTy_one[i] = Float(40, 20, 0, ALICE);
+	}
+	Float* inverse_two = new Float[cols * cols];
+	for (int i = 0; i < cols * cols; i++) {
+		inverse_two[i] = Float(40, 20, 0, BOB);
+	}
+	Float* XTy_two = new Float[cols];
+	for (int i = 0; i < cols; i++) {
+		XTy_two[i] = Float(40, 20, 0, BOB);
+	}
+	XXinv_cache[0] = inverse_one; XXinv_cache[1] = inverse_two;
+	XTy_cache[0] = XTy_one; XTy_cache[1] = XTy_two; 
+	*/
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
 	for (int i = 0; i < DIMENSION; i++) {
 		z[i].reveal<string>();
@@ -327,6 +346,6 @@ int main(int argc, char** argv) {
 	*/
 	main_func();
 	//cout << "Printing weights" << endl;
-
+//	sort(16);
 	finalize_plain_prot();
 }	
