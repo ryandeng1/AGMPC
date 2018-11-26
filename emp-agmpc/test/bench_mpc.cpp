@@ -20,7 +20,7 @@ int EXPONENT_LENGTH = 20;
 
 vector<Float*> readMatrix(string file_name, double rho, int rows, int cols) {
     cout << "Reading matrix" << endl;
-    std::ifstream i(file_name);
+    std::ifstream i("../"+file_name);
     json j;
     i >> j;
     MatrixXd data_matrix(rows, cols);
@@ -104,9 +104,10 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	ios[1]->flush();
 	t2 = time_from(start);
 	if(party == 1)cout <<"FUNC_IND:\t"<<party<<"\t"<<t2<<" \n"<<flush;
-
+//	cout << "Input size " << cf.n1 + cf.n2 << endl;
 	start = clock_start();
 	mpc->function_dependent();
+	cout << "Did I complete function dependent?" << endl;
 	ios[0]->flush();
 	ios[1]->flush();
 	t2 = time_from(start);
@@ -117,6 +118,7 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	cout << "Output size " << cf.n3 << endl;
 	string file_name = "data" + to_string(party) + ".json";
 	vector<Float*> values = readMatrix(file_name, rho, rows, cols);
+	cout << "Read matrix" << endl;
 	Float* XTX_rhoI = values[0];
 	Float* XTy = values[1];
 	int input_index = 0;

@@ -252,10 +252,10 @@ Float* admm(vector<Float*> XXinv_cache, vector<Float*> XTy_cache, int admm_iter,
 	for (int i = 0; i < dim; i++) {
 		z[i] = Float(40, 20, 0);
 	}
-	cout << "Inited everything" << endl;
+	//cout << "Inited everything" << endl;
 	for (int i = 0; i < admm_iter; i++) {
 		for (int j = 0; j < nparties; j++) {
-			cout << "Did I make it here?" << endl;
+			//cout << "Did I make it here?" << endl;
 			w_list[j] = admm_local(XXinv_cache[j], XTy_cache[j], u_list[j], z, rho, l);
 		}
 
@@ -282,26 +282,30 @@ Float* main_func() {
 		Float* XXinv = new Float[cols * cols];
 		for (int j = 0; j < cols; j++) {
 			for (int k = 0; k < cols; k++) {
-				XXinv[i * cols + j] = Float(40, 20, 0.0, i + 1);
+				if (i == 0) {
+					XXinv[i * cols + j] = Float(40, 20, 0, ALICE);
+				}
+				else {
+					XXinv[i * cols + j] = Float(40, 20, 0, BOB);
+				}
 			}
 		} 
 		Float* XTy = new Float[cols];
 		for (int h = 0; h < cols; h++) {
-			XTy[h] = Float(40, 20, 0.0, i + 1);
+			if (i == 0) {
+				XTy[h] = Float(40, 20, 0, ALICE);
+			}
+			else {
+				XTy[h] = Float(40, 20, 0, BOB);
+			}
 		}
 		XXinv_cache[i] = XXinv;
 		XTy_cache[i] = XTy;
 	}
 
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
-	cout << "Printing weights" << endl;
-	for (int i = 0; i < cols; i++) {
-		z[i].reveal<string>();
-	}
-
-
-
 	
+	return z;	
 }
 
 
@@ -319,6 +323,10 @@ int main(int argc, char** argv) {
 	//cout << "Did I make it here?" << endl;
 
 	*/
-	main_func();
+	Float* z = main_func();
+	//cout << "Printing weights" << endl;
+	for (int i = 0; i < DIMENSION; i++) {
+		z[i].reveal<string>();
+	}
 	finalize_plain_prot();
 }	
