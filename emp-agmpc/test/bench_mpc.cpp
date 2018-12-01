@@ -13,12 +13,30 @@ const string circuit_file_location = macro_xstr(EMP_CIRCUIT_PATH);
 const static int nP = 2;
 int party, port;
 int rows = 100;
-int cols = 5;
+int cols = 10;
 double rho = 0.01;
-int VALUE_LENGTH = 20;
-int EXPONENT_LENGTH = 20;
+int VALUE_LENGTH = 16;
+int EXPONENT_LENGTH = 16;
 
-vector<MatrixXd> readMatrix(string file_name, double rho, int rows, int cols) {
+//Convert double input into bit representation with 16 bit decimal precision and 16 bit value 
+//0th element is exponent, 1st element is value
+vector<short> convert_double(int value_length, int expnt_length, double input) {
+    double abs = std::abs(input);
+    double lo = pow(2, value_length - 2);
+    double up = pow(2, value_length - 1);
+    short p = 0;
+    while (abs > 0. && abs < lo) {abs *=2; --p;}
+    while (abs >= up) {abs /=2; ++p;}
+    vector<short> result(2);
+    result[0] = p;
+    short val;
+    val = (abs * (input > 0 ? 1: -1));
+    result[1] = val;
+    return result; 
+}
+
+
+vector<vector<short>*> readMatrix(string file_name, double rho, int rows, int cols) {
     cout << "Reading matrix" << endl;
     std::ifstream i("../"+file_name);
     json j;
@@ -36,8 +54,6 @@ vector<MatrixXd> readMatrix(string file_name, double rho, int rows, int cols) {
 
 
     //Compute values of matrices
-    //cout << "Matrix" << endl;
-    //cout << data_matrix << endl;
     MatrixXd transpose = data_matrix.transpose();
 
     
@@ -52,45 +68,35 @@ vector<MatrixXd> readMatrix(string file_name, double rho, int rows, int cols) {
     cout << inverse << endl;
     cout << "XTy" << endl;
     cout << XTy << endl;
-    /*
-    Float *inverse_float  = new Float[cols * cols];
-    int r = cols;
-    int c = cols;
-    cout << "Rows " << r << "Columns " << c << endl;
+    
+    vector<short> * inverse_float = new vector<short>[cols * cols];
   
-
+    int r = inverse.rows();
+    int c = inverse.cols();
     for (int i = 0; i < r; i++) {
         for (int j = 0; j < c; j++) {
-            inverse_float[i * c + j] = Float(VALUE_LENGTH, EXPONENT_LENGTH, inverse(i, j));
-         
+            inverse_float[i * c + j] = convert_double(VALUE_LENGTH, EXPONENT_LENGTH, inverse(i, j));
         }
     }  
 
     cout << "Got XTX inverse" << endl;
 
-    Float* XTy_float = new Float[cols];
+    vector<short> * XTy_float = new vector<short>[cols];
     r = XTy.rows();
     c = XTy.cols();
     for (int i = 0; i < r; i++) {
         for (int j = 0; j < c; j++) {
-            XTy_float[i * c + j] = Float(VALUE_LENGTH, EXPONENT_LENGTH, XTy(i, j));
+            XTy_float[i * c + j] = convert_double(VALUE_LENGTH, EXPONENT_LENGTH, XTy(i, j));
         }
     }
     cout << "Got XTy " << endl;
     
     
-    vector<Float*> values(2);
+    vector<vector<short> *> values(2);
     values[0] = inverse_float;
     values[1] = XTy_float;
     return values;
-    */
-    vector<MatrixXd> values(2);
-    values[0] = inverse;
-    values[1] = XTy;
-    return values;
 }
-
-
 void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	cout << "Party " << party << endl;
 	if(party == 1)cout <<"CIRCUIT:\t"<<filename<<endl;
@@ -121,106 +127,78 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	if(party == 1)cout <<"FUNC_DEP:\t"<<party<<"\t"<<t2<<" \n"<<flush;
 
 
-	bool *in = new bool[cf.n1+cf.n2]; bool *out = new bool[cf.n3];
+//	bool *in = new bool[cf.n1+cf.n2]; bool *out = new bool[cf.n3];
 	cout << "Output size " << cf.n3 << endl;
 	string file_name = "data" + to_string(party) + ".json";
 //	vector<Float*> values = readMatrix(file_name, rho, rows, cols);
         
 	cout << "Read matrix" << endl;
-	vector<MatrixXd> values = readMatrix(file_name, rho, rows, cols);
-	MatrixXd  inverse  = values[0];
-	MatrixXd  XTy_vec = values[1];
-    	int r = cols;
-    	int c = cols;
-    	cout << "Rows " << r << "Columns " << c << endl;
-  
-	/*
-    	for (int i = 0; i < r; i++) {
-        	for (int j = 0; j < c; j++) {
-            		XTX_rhoI[i * c + j] = Float(VALUE_LENGTH, EXPONENT_LENGTH, inverse(i, j)); 
-        	}
-    	}  
-
-   	 cout << "Got XTX inverse" << endl;
-
-    	Float* XTy = new Float[cols];
-//    	r = XTy.rows();
-//    	c = XTy.cols();
-    	for (int i = 0; i < r; i++) {
-        	for (int j = 0; j < c; j++) {
-            		XTy[i * c + j] = Float(VALUE_LENGTH, EXPONENT_LENGTH, XTy_vec(i, j));
-        	}
-    	}
-   	cout << "Got XTy " << endl;
-        */
-
-        //Float* inverse_float = new Float[cols * cols];
-        //Float* XTy_float = new Float[cols];
-        
-	int input_index = 0;
-	cout << "HERE" << endl;
-	for (int i = 0; i < cols; i++) {
-		for (int j = 0; j < cols; j++) {		
-//			Float float_val = Float(VALUE_LENGTH, EXPONENT_LENGTH, 0.0);
-			cout << "Instantiated float " << endl;
-//			Integer val = float_val.value;
-//			Integer expnt = float_val.expnt;
-			for (int k = 0; k < VALUE_LENGTH; k++) {
-				in[input_index] = 0;//val[k].reveal<bool>();
-				input_index++;
-			}
-			for (int k = 0; k < EXPONENT_LENGTH; k++) {
-				in[input_index] = 0;//expnt[k].reveal<bool>();
-				input_index++;
-			}
-		}	
-	}
-	for (int i = 0; i < cols; i++) {
-//		Float float_val = Float(VALUE_LENGTH, EXPONENT_LENGTH, XTy_vec(i));
-//		Integer val = float_val.value;
-//		Integer expnt = float_val.expnt;
-		for (int j = 0; j < VALUE_LENGTH; j++) {
-			in[input_index] = 0;//val[j].reveal<bool>();
-			input_index++;
+	vector<vector<short>*> values = readMatrix(file_name, rho, rows, cols);
+	vector<short>*  inverse_float  = values[0];
+	vector<short>*  XTy_float = values[1];
+ 	
+	// Convert json file to bits
+	bool* in = new bool[cf.n1 + cf.n2]; bool* out = new bool[cf.n3];
+	int index = 0;
+	for (int i = 0; i < cols * cols; i++) {
+		vector<short> inverse_i  = inverse_float[i];
+                short expnt = inverse_i[0];
+		short val = inverse_i[1];
+                for (int i = 0; i < EXPONENT_LENGTH; i++) {
+			in[index++] = (expnt >> i) & 1;	
 		}
-		for (int j = 0; j < EXPONENT_LENGTH; j++) {
-			in[input_index] = 0;//expnt[j].reveal<bool>();
-			input_index++;
+		for (int i = 0; i < VALUE_LENGTH; i++) {
+			in[index++] = (val >> i) & 1;
+		}
+	} 
+	for (int i = 0; i < cols; i++) {
+		vector<short> XTy_i = XTy_float[i];
+		short expnt = XTy_i[0];
+		short val = XTy_i[1];
+                for (int i = 0; i < EXPONENT_LENGTH; i++) {
+			in[index++] = (expnt >> i) & 1;	
+		}
+		for (int i = 0; i < VALUE_LENGTH; i++) {
+			in[index++] = (val >> i) & 1;
 		}
 	}
+      
 
+	
 
-
-
-
+	cout << "Index " << index << endl;
 	//memset(in, false, cf.n1+cf.n2);
 	start = clock_start();
 	mpc->online(in, out);
 	ios[0]->flush();
 	ios[1]->flush();
 	t2 = time_from(start);
-
+	// Turn output into actual floats
 //	uint64_t band2 = io.count();
 //	if(party == 1)cout <<"bandwidth\t"<<party<<"\t"<<band2<<endl;
 	if(party == 1)cout <<"ONLINE:\t"<<party<<"\t"<<t2<<" \n"<<flush;
-//	Float* result = new Float[cols];
-	/*
+	index = cf.n3 - (cols * (EXPONENT_LENGTH + VALUE_LENGTH));
+	vector<double> result(cols);
 	for (int i = 0; i < cols; i++) {
-		Integer value = Integer(VALUE_LENGTH, pointer);
-		Integer expnt = Integer(EXPONENT_LENGTH, pointer + VALUE_LENGTH);
-		Float float_val = Float(VALUE_LENGTH, EXPONENT_LENGTH, 0.0);
-		float_val.value = value;
-		float_val.expnt = expnt;
-		result[i] = float_val;
-		pointer = pointer + VALUE_LENGTH + EXPONENT_LENGTH;
+		short expnt = 0;
+		for (int j = 0; j < EXPONENT_LENGTH; j++) {
+			expnt = expnt | out[index++];
+			expnt = expnt << 1;
+		}
+		short val = 0;
+		for (int k = 0; k < VALUE_LENGTH; k++) {
+			val = val | out[index++];
+			val = val << 1;
+		}
+		cout << "Exponent " << expnt << endl;
+		cout << "Value " << val << endl;
+		result[i] = (double) (val / pow(2, expnt));
 	}
-	*/
-	/*
-	cout << "Weights" << endl;
+	cout << "Printing Weights" << endl;
 	for (int i = 0; i < cols; i++) {
-		cout << result[i].reveal<string>() << endl;
+		cout << result[i] << endl;
 	}
-	*/
+
 	if (party == 1) {
 		string res = "";
 		for (int i = 0; i < cf.n3; i++) {
@@ -228,6 +206,7 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 		}
 		cout << "Result " << res << endl;
 	}
+	
 	delete mpc;
 }
 int main(int argc, char** argv) {

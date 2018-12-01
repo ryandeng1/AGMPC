@@ -5,9 +5,9 @@ using namespace emp;
 using namespace std;
 using json = nlohmann::json;
 using namespace Eigen;
-const int NUM_EXPNT = 20;
-const int NUM_VALUE = 20;
-const int DIMENSION = 5;
+const int NUM_EXPNT = 16;
+const int NUM_VALUE = 16;
+const int DIMENSION = 10;
 
 
 
@@ -86,7 +86,7 @@ Float soft_threshold(Float th, Float v) {
         return v + th;
     }
     else {
-        return Float(40, 20, 0);
+        return Float(NUM_VALUE, NUM_EXPNT, 0);
     }
 }
 
@@ -273,8 +273,8 @@ void main_func() {
 	int cols = DIMENSION;
 	int nparties = 2;
 	int admm_iter = 10;
-	Float rho(40, 20, 0.01);
-	Float l(40, 20, 0.008);
+	Float rho(NUM_VALUE, NUM_EXPNT, 0.01);
+	Float l(NUM_VALUE, NUM_EXPNT, 0.008);
 	vector<Float*> XXinv_cache(nparties);
 	vector<Float*> XTy_cache(nparties);
 		
@@ -323,9 +323,11 @@ void main_func() {
 	XTy_cache[0] = XTy_one; XTy_cache[1] = XTy_two; 
 	*/
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
+	
 	for (int i = 0; i < DIMENSION; i++) {
-		z[i].reveal<string>();
-	}	
+		cout << z[i].reveal<string>() << endl;
+	}
+		
 		
 }
 
