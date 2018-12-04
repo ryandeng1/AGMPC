@@ -140,34 +140,52 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	// Convert json file to bits
 	bool* in = new bool[cf.n1 + cf.n2]; bool* out = new bool[cf.n3];
 	int index = 0;
+	cout << "Looking at the bits of XTX" << endl;
 	for (int i = 0; i < cols * cols; i++) {
 		vector<short> inverse_i  = inverse_float[i];
                 short expnt = inverse_i[0];
 		short val = inverse_i[1];
-                for (int i = 0; i < EXPONENT_LENGTH; i++) {
-			in[index++] = (expnt >> i) & 1;	
-		}
-		for (int i = 0; i < VALUE_LENGTH; i++) {
+		for (int i = VALUE_LENGTH - 1; i >= 0; i--) {
 			in[index++] = (val >> i) & 1;
 		}
+		for (int i = EXPONENT_LENGTH - 1; i >= 0; i--) {
+			in[index++] = (expnt >> i) & 1;	
+		}
+	
 	} 
 	for (int i = 0; i < cols; i++) {
 		vector<short> XTy_i = XTy_float[i];
 		short expnt = XTy_i[0];
 		short val = XTy_i[1];
-                for (int i = 0; i < EXPONENT_LENGTH; i++) {
-			in[index++] = (expnt >> i) & 1;	
-		}
-		for (int i = 0; i < VALUE_LENGTH; i++) {
+               	for (int i = VALUE_LENGTH - 1; i >= 0; i--) {
 			in[index++] = (val >> i) & 1;
+		}
+		 for (int i = EXPONENT_LENGTH - 1; i >= 0; i--) {
+			in[index++] = (expnt >> i) & 1;	
 		}
 	}
       
 
 	
-
+	// Test to see if the inputs actually work
 	cout << "Index " << index << endl;
-	//memset(in, false, cf.n1+cf.n2);
+	memset(in, false, cf.n1+cf.n2);
+//	string res = "";
+	int check_index = 0;
+	for (int i = 0; i < cols * cols; i++) {
+		
+		short val = 0;
+		for (int j = 0; j < VALUE_LENGTH; j++) {
+			int x = in[check_index++] ? 1 : 0;
+			val = (val << 1) | x;
+		}
+		short expnt  = 0;
+		for (int j = 0; j < EXPONENT_LENGTH; j++) {
+			int x = in[check_index++] ? 1 : 0;
+			expnt = (expnt << 1) | x;
+		}
+		cout << "Exponent: " << expnt << "Value: " << val << " Decimal: " << (double) (val *  pow(2, expnt)) << endl;
+	}
 	start = clock_start();
 	mpc->online(in, out);
 	ios[0]->flush();
@@ -178,6 +196,7 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 //	if(party == 1)cout <<"bandwidth\t"<<party<<"\t"<<band2<<endl;
 	if(party == 1)cout <<"ONLINE:\t"<<party<<"\t"<<t2<<" \n"<<flush;
 	index = cf.n3 - (cols * (EXPONENT_LENGTH + VALUE_LENGTH));
+	cout << "Starting at output index " << index << endl;
 	vector<double> result(cols);
 	for (int i = 0; i < cols; i++) {
 		short expnt = 0;
@@ -190,22 +209,21 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 			val = val | out[index++];
 			val = val << 1;
 		}
-		cout << "Exponent " << expnt << endl;
-		cout << "Value " << val << endl;
-		result[i] = (double) (val / pow(2, expnt));
+	
+		result[i] = (double) (val *  pow(2, expnt));
 	}
 	cout << "Printing Weights" << endl;
 	for (int i = 0; i < cols; i++) {
 		cout << result[i] << endl;
 	}
 
-	if (party == 1) {
+	
 		string res = "";
 		for (int i = 0; i < cf.n3; i++) {
 			res += (out[i] ? "1":"0");
 		}
 		cout << "Result " << res << endl;
-	}
+	
 	
 	delete mpc;
 }
