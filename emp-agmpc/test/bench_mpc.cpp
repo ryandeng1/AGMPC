@@ -138,8 +138,10 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	vector<short>*  XTy_float = values[1];
  	
 	// Convert json file to bits
-	bool* in = new bool[cf.n1 + cf.n2]; bool* out = new bool[cf.n3];
+	bool* in = new bool[cf.n1]; bool* out = new bool[cf.n3];
 	int index = 0;
+	int check_index = index;
+	cout << "Party " << party << " Index: " << index;
 	cout << "Looking at the bits of XTX" << endl;
 	for (int i = 0; i < cols * cols; i++) {
 		vector<short> inverse_i  = inverse_float[i];
@@ -169,9 +171,8 @@ void bench_once(NetIOMP<nP> * ios[2], ThreadPool * pool, string filename) {
 	
 	// Test to see if the inputs actually work
 	cout << "Index " << index << endl;
-	memset(in, false, cf.n1+cf.n2);
+	memset(in, false, cf.n1);
 //	string res = "";
-	int check_index = 0;
 	for (int i = 0; i < cols * cols; i++) {
 		
 		short val = 0;
