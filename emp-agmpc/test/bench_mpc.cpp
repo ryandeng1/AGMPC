@@ -10,7 +10,7 @@ using namespace Eigen;
 
 const string circuit_file_location = macro_xstr(EMP_CIRCUIT_PATH);
 
-const static int nP = 2;
+const static int nP = 3;
 int party, port;
 int rows = 100;
 int cols = 10;
