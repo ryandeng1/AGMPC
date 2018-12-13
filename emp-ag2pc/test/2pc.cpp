@@ -108,12 +108,12 @@ int main(int argc, char** argv) {
 	NetIO* io = new NetIO(party==ALICE ? nullptr:IP, port);
 	io->set_nodelay();
 //	string file = circuit_file_location+"/sha-1.txt";
-	string file = circuit_file_location+"/mul.txt";
+	string file = circuit_file_location+"/sort.txt";
 	CircuitFile cf(file.c_str());
 	auto t1 = clock_start();
 	C2PC twopc(io, party, &cf);
 	io->flush();
-	cout << "one time:\t"<<party<<"\t" <<time_from(t1)<<endl;
+	cout << "Setup: one time:\t"<<party<<"\t" <<time_from(t1)<<endl;
 	t1 = clock_start();
 	twopc.function_independent();
 	io->flush();
@@ -125,19 +125,22 @@ int main(int argc, char** argv) {
 	cout << "dep:\t"<<party<<"\t"<<time_from(t1)<<endl;
 
 
-	bool in[cf.n1 + cf.n2], out[cf.n3];
-	memset(in, false, cf.n1 + cf.n2);
+//	bool in[cf.n1 + cf.n2], out[cf.n3];
+//	memset(in, false, cf.n1 + cf.n2);
 
 
 	// Fill in "in" boolean array with correct values.
 	cout << "Read matrix" << endl;
+	string file_name = "data" + to_string(party) + ".json";
 	vector<vector<short>*> values = readMatrix(file_name, rho, rows, cols);
 	vector<short>*  inverse_float  = values[0];
 	vector<short>*  XTy_float = values[1];
  	
 	// Convert json file to bits
 	bool* in = new bool[cf.n1]; bool* out = new bool[cf.n3];
+	memset(in, false, cf.n1 + cf.n2);
 	int index = 0;
+//	index = (party - 1) * cf.n1;
 	int check_index = index;
 	cout << "Party " << party << " Index: " << index;
 	cout << "Looking at the bits of XTX" << endl;
@@ -145,11 +148,11 @@ int main(int argc, char** argv) {
 		vector<short> inverse_i  = inverse_float[i];
                 short expnt = inverse_i[0];
 		short val = inverse_i[1];
-		for (int i = VALUE_LENGTH - 1; i >= 0; i--) {
-			in[index++] = (val >> i) & 1;
-		}
 		for (int i = EXPONENT_LENGTH - 1; i >= 0; i--) {
 			in[index++] = (expnt >> i) & 1;	
+		}
+		for (int i = VALUE_LENGTH - 1; i >= 0; i--) {
+			in[index++] = (val >> i) & 1;
 		}
 	
 	} 
@@ -157,11 +160,11 @@ int main(int argc, char** argv) {
 		vector<short> XTy_i = XTy_float[i];
 		short expnt = XTy_i[0];
 		short val = XTy_i[1];
-               	for (int i = VALUE_LENGTH - 1; i >= 0; i--) {
-			in[index++] = (val >> i) & 1;
-		}
-		 for (int i = EXPONENT_LENGTH - 1; i >= 0; i--) {
+		for (int i = EXPONENT_LENGTH - 1; i >= 0; i--) {
 			in[index++] = (expnt >> i) & 1;	
+		}
+		for (int i = VALUE_LENGTH - 1; i >= 0; i--) {
+			in[index++] = (val >> i) & 1;
 		}
 	}
       
@@ -174,15 +177,16 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < cols * cols; i++) {
 		
 		short val = 0;
-		for (int j = 0; j < VALUE_LENGTH; j++) {
-			int x = in[check_index++] ? 1 : 0;
-			val = (val << 1) | x;
-		}
 		short expnt  = 0;
 		for (int j = 0; j < EXPONENT_LENGTH; j++) {
 			int x = in[check_index++] ? 1 : 0;
 			expnt = (expnt << 1) | x;
 		}
+		for (int j = 0; j < VALUE_LENGTH; j++) {
+			int x = in[check_index++] ? 1 : 0;
+			val = (val << 1) | x;
+		}
+	
 		cout << "Exponent: " << expnt << "Value: " << val << " Decimal: " << (double) (val *  pow(2, expnt)) << endl;
 	}
 
