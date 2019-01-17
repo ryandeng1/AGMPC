@@ -13,7 +13,7 @@ const string circuit_file_location = macro_xstr(EMP_CIRCUIT_PATH);
 const static int nP = 2;
 int party, port;
 int rows = 100;
-int cols = 5;
+int cols = 10;
 double rho = 0.01;
 int VALUE_LENGTH = 20;
 int EXPONENT_LENGTH = 20;

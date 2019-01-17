@@ -5,9 +5,9 @@ using namespace emp;
 using namespace std;
 using json = nlohmann::json;
 using namespace Eigen;
-const int NUM_EXPNT = 20;
-const int NUM_VALUE = 20;
-const int DIMENSION = 5;
+const int NUM_EXPNT = 11;
+const int NUM_VALUE = 15;
+const int DIMENSION = 2;
 
 
 
@@ -23,7 +23,8 @@ void ham(int n) {
 void mult(int n) {
 	Integer a(n, 0, ALICE);
 	Integer b(n, 0, BOB);
-	Integer c = a*b;
+	Integer c = Integer(2 * n, 0, PUBLIC); //a*b;
+	c = a * b;
 	c.reveal<string>();
 }
 void modexp(int n1, int n2) {
@@ -32,6 +33,15 @@ void modexp(int n1, int n2) {
 	Integer c(n1, 5, ALICE);
 	Integer d = a.modExp(b, c);
 }
+
+
+void add(int n) {
+	Integer a(n, 0, ALICE);
+	Integer b(n, 0, BOB);
+	Integer c = a + b;
+	c.reveal<string>();
+}
+
 void sort(int n) {
 	Integer *A = new Integer[n];
 	Integer *B = new Integer[n];
@@ -86,7 +96,7 @@ Float soft_threshold(Float th, Float v) {
         return v + th;
     }
     else {
-        return Float(40, 20, 0);
+        return Float(NUM_VALUE, NUM_EXPNT, 0);
     }
 }
 
@@ -273,8 +283,8 @@ void main_func() {
 	int cols = DIMENSION;
 	int nparties = 2;
 	int admm_iter = 10;
-	Float rho(40, 20, 0.01);
-	Float l(40, 20, 0.008);
+	Float rho(NUM_VALUE, NUM_EXPNT, 0.01);
+	Float l(NUM_VALUE, NUM_EXPNT, 0.008);
 	vector<Float*> XXinv_cache(nparties);
 	vector<Float*> XTy_cache(nparties);
 		
@@ -331,7 +341,52 @@ void main_func() {
 
 
 
+vector<Integer*> readMatrix(string file_name, int length) {
+    cout << "Reading matrix" << endl;
+    std::ifstream i(file_name);
+    json j;
+    i >> j;
+    int rows = DIMENSION;
+    int cols = DIMENSION;
+    Integer* matrix1 = new Integer[rows * cols];
+    Integer* matrix2 = new Integer[rows * cols];
+    vector<double> x_data = j["x"];
+    vector<double> y_data = j["y"];
 
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+	    matrix1[i * cols + j] = Integer(length, x_data[i * cols + j], ALICE);
+        }
+    }
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+	    matrix2[i * cols + j] = Integer(length, y_data[i * cols + j], BOB);
+        }
+    }
+
+    vector<Integer*> values(2);
+    values[0] = matrix1;
+    values[1] = matrix2;
+    return values;
+}
+
+
+Integer* mat_mul(Integer* left, Integer* right, int left_row, int left_col, int right_row, int right_col) {
+    Integer* result = new Integer[left_row * right_col];
+    for (int i = 0; i < left_row * right_col; i++) {
+	result[i] = Integer(64, 0, PUBLIC);
+    }    
+    for (int i = 0; i < left_row; i++) {
+	for (int j = 0; j < right_col; j++) {
+	    for (int k = 0; k < left_col; k++) {
+		result[i * right_col + j] = result[i * right_col + j] +  left[i * left_col + k] * right[k * right_col + j];
+	    }
+	}
+    }
+
+
+    return result;
+}
 
 
 
@@ -344,8 +399,30 @@ int main(int argc, char** argv) {
 	//cout << "Did I make it here?" << endl;
 
 	*/
-	main_func();
-	//cout << "Printing weights" << endl;
-//	sort(16);
+	/*
+        string file_name = "data.json";
+        int len = 32;
+	
+	int dim = DIMENSION;
+	Integer* left = new Integer[dim * dim];//matrices[0];
+	Integer* right = new Integer[dim * dim]; //matrices[1];
+	for (int i = 0; i < dim; i++) {
+		for (int j = 0; j < dim; j++) {
+			left[i * dim + j] = Integer(len, 0, ALICE);
+			right[i * dim + j] = Integer(len, 0, BOB);	
+		}
+	}
+
+
+	Integer* result = mat_mul(left, right, dim, dim, dim, dim);
+	cout << "RESULT" << endl;
+	for (int i = 0; i < dim; i++) {
+	    for (int j = 0; j < dim; j++) {
+		Integer x = result[i * dim + j];
+		x.reveal<string>();
+	    }
+	}
+	*/
+	add(32);
 	finalize_plain_prot();
 }	
