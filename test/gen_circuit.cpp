@@ -5,9 +5,9 @@ using namespace emp;
 using namespace std;
 using json = nlohmann::json;
 using namespace Eigen;
-const int NUM_EXPNT = 11;
-const int NUM_VALUE = 15;
 const int DIMENSION = 2;
+const int NUM_EXPNT = 16;
+const int NUM_VALUE = 16;
 
 
 
@@ -333,9 +333,11 @@ void main_func() {
 	XTy_cache[0] = XTy_one; XTy_cache[1] = XTy_two; 
 	*/
 	Float* z = admm(XXinv_cache, XTy_cache, admm_iter, rho, l, nparties);
+	
 	for (int i = 0; i < DIMENSION; i++) {
-		z[i].reveal<string>();
-	}	
+		cout << z[i].reveal<string>() << endl;
+	}
+		
 		
 }
 
